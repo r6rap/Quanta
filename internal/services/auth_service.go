@@ -1,26 +1,34 @@
 package services
 
 import (
+	"errors"
 	"os"
 	"time"
 
 	"github.com/r6rap/Quanta/internal/domain"
-	"github.com/r6rap/Quanta/internal/repository"
 	"github.com/r6rap/Quanta/pkg/jwt"
-
-	"errors"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
-	userRepo *repository.UserRepository
-	refreshRepo *repository.RefreshRepository
+	userRepo    UserRepository
+	refreshRepo RefreshRepository
 }
 
-func NewAuthService(userRepo *repository.UserRepository, refreshRepo *repository.RefreshRepository) *AuthService {
+type UserRepository interface {
+	GetByEmail(email string) (*domain.User, error)
+	Create(user *domain.User) error
+}
+
+type RefreshRepository interface {
+	Create(req *domain.RefreshToken) error
+	GetByToken(token string, userId uint) (*domain.RefreshToken, error)
+	Delete(token string, userId uint) error
+}
+
+func NewAuthService(userRepo UserRepository, refreshRepo RefreshRepository) *AuthService {
 	return &AuthService{
-		userRepo: userRepo,
+		userRepo:    userRepo,
 		refreshRepo: refreshRepo,
 	}
 }
@@ -41,9 +49,9 @@ func (s *AuthService) Register(req *domain.RegisterInput) (*domain.User, error) 
 	}
 
 	user := &domain.User{
-		Email:       req.Email,
+		Email:        req.Email,
 		PasswordHash: string(hash),
-		Name:        req.Name,
+		Name:         req.Name,
 	}
 
 	if err = s.userRepo.Create(user); err != nil {
@@ -74,9 +82,9 @@ func (s *AuthService) Login(req *domain.LoginInput) (*domain.LoginResponse, erro
 
 	expiresAt, _ := time.ParseDuration(expiresStr)
 
-	payload := &domain.RefreshToken {
-		UserID: user.ID,
-		Token: refreshToken,
+	payload := &domain.RefreshToken{
+		UserID:    user.ID,
+		Token:     refreshToken,
 		ExpiresAt: time.Now().Add(expiresAt),
 	}
 
@@ -84,7 +92,7 @@ func (s *AuthService) Login(req *domain.LoginInput) (*domain.LoginResponse, erro
 
 	return &domain.LoginResponse{
 		AccessToken: accessToken,
-		User: *user,
+		User:        *user,
 	}, nil
 }
 
@@ -98,7 +106,7 @@ func (s *AuthService) RefreshAccessToken(req *domain.RefreshInput) (string, erro
 	if err != nil {
 		return "", err
 	}
-	
+
 	if existingToken == nil {
 		return "", errors.New("Token not found")
 	}

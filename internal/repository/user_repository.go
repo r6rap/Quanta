@@ -1,10 +1,11 @@
 package repository
 
 import (
-	"github.com/r6rap/Quanta/pkg/database"
-	"github.com/r6rap/Quanta/internal/domain"
-
+	"database/sql"
 	"errors"
+
+	"github.com/r6rap/Quanta/internal/domain"
+	"github.com/r6rap/Quanta/pkg/database"
 	"gorm.io/gorm"
 )
 
@@ -29,10 +30,10 @@ func (r *UserRepository) GetByEmail(email string) (*domain.User, error) {
 	query := `SELECT id, email, password_hash, name, created_at FROM users WHERE email = $1`
 
 	rows := r.db.Raw(query, email).Row()
-	
+
 	err := rows.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt)
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 
@@ -44,10 +45,10 @@ func (r *UserRepository) GetByID(id uint) (*domain.User, error) {
 	query := `SELECT id, email, password_hash, name, created_at FROM users WHERE id = $1`
 
 	row := r.db.Raw(query, id).Row()
-	
+
 	err := row.Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.CreatedAt)
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 
