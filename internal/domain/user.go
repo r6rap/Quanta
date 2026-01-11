@@ -1,4 +1,4 @@
-package user
+package domain
 
 import "time"
 
@@ -13,12 +13,17 @@ type User struct {
 }
 
 type RegisterInput struct {
-	Email string `json:"email" binding:"required, email"`
-	Password string `json:"password" binding:"required, min=8"`
-	Name string `json:"name" binding:"required, min=4"`
+	Email 		string `json:"email" binding:"required, email"`
+	Password 	string `json:"password" binding:"required, min=8"`
+	Name 		string `json:"name" binding:"required, min=4"`
 }
 
 type LoginInput struct {
-	Email string `json:"email" binding:"required, email"`
-	Password string `json:"password" binding:"required, min=8"`
+	Email 		string `json:"email" binding:"required, email"`
+	Password 	string `json:"password" binding:"required, min=8"`
+}
+
+type LoginResponse struct {
+	AccessToken string 	`json:"access_token"`
+	User 		User	`json:"user"`
 }

@@ -41,7 +41,7 @@ func GenerateAccessToken(userID uint, email string) (string, error) {
 	return token.SignedString([]byte(secretKey))
 }
 
-func GenerateRefereshToken(userID uint, email string) (string, error) {
+func GenerateRefreshToken(userID uint, email string) (string, error) {
 	env := godotenv.Load()
 	if env != nil {
 		return "", errors.New("failed to load .env file")

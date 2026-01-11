@@ -1,4 +1,4 @@
-package config
+package database
 
 import (
 	"fmt"
@@ -11,9 +11,11 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var DB *gorm.DB
+type DB struct {
+	*gorm.DB
+}
 
-func ConnectDB() {
+func ConnectDB() (*DB, error) {
 	var err error
 
 	env := godotenv.Load()
@@ -31,7 +33,7 @@ func ConnectDB() {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, password, dbname, port)
 
 	// open a connection to postgresql
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		// logger to take notes activiy query
 		Logger: logger.Default.LogMode(logger.Info),
 		// prepare statement to improve performance
@@ -39,9 +41,10 @@ func ConnectDB() {
 	})
 
 	if err != nil {
-		log.Fatal("Failed to connect to database")
+		return nil, err
 	}
 
 
 	log.Println("Connected to database")
+	return &DB{DB: db}, nil
 }
