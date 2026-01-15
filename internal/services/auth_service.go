@@ -23,7 +23,7 @@ type UserRepository interface {
 type RefreshRepository interface {
 	Create(req *domain.RefreshToken) error
 	GetByToken(token string, userId uint) (*domain.RefreshToken, error)
-	Delete(token string, userId uint) error
+	Delete(id uint, userId uint) error
 }
 
 func NewAuthService(userRepo UserRepository, refreshRepo RefreshRepository) *AuthService {
@@ -91,6 +91,7 @@ func (s *AuthService) Login(req *domain.LoginInput) (*domain.LoginResponse, erro
 	s.refreshRepo.Create(payload)
 
 	return &domain.LoginResponse{
+		RefreshToken: refreshToken,
 		AccessToken: accessToken,
 		User:        *user,
 	}, nil
@@ -112,7 +113,7 @@ func (s *AuthService) RefreshAccessToken(req *domain.RefreshInput) (string, erro
 	}
 
 	if time.Now().After(existingToken.ExpiresAt) {
-		return "", s.refreshRepo.Delete(req.RefreshToken, claims.UserID)
+		return "", s.refreshRepo.Delete(existingToken.ID, existingToken.UserID)
 	}
 
 	accessToken, err := jwt.GenerateAccessToken(claims.UserID, claims.Email)
@@ -124,5 +125,5 @@ func (s *AuthService) RefreshAccessToken(req *domain.RefreshInput) (string, erro
 }
 
 func (s *AuthService) Logout(req *domain.LogoutInput) error {
-	return s.refreshRepo.Delete(req.RefreshToken, req.UserID)
+	return s.refreshRepo.Delete(req.ID, req.UserID)
 }

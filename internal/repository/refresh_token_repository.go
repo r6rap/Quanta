@@ -25,25 +25,25 @@ func (r *RefreshRepository) Create(req *domain.RefreshToken) error {
 }
 
 func (r *RefreshRepository) GetByToken(token string, userId uint) (*domain.RefreshToken, error) {
-	storedToken := &domain.RefreshToken{}
+	storedToken := domain.RefreshToken{}
 
-	query := `SELECT token FROM refresh_tokens WHERE token = $1 AND user_id = $2`
+	query := `SELECT token, expires_at FROM refresh_tokens WHERE token = $1 AND user_id = $2`
 
-	row := r.db.Raw(query, token, userId).First(&storedToken.Token).Row()
+	row := r.db.Raw(query, token, userId).Row()
 
-	err := row.Scan(&token, &userId)
+	err := row.Scan(&storedToken.Token, &storedToken.ExpiresAt)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 
-	return storedToken, err
+	return &storedToken, err
 }
 
-func (r *RefreshRepository) Delete(token string, userId uint) error {
+func (r *RefreshRepository) Delete(id uint, userId uint) error {
 	query := `DELETE FROM refresh_tokens WHERE id = $1 AND user_id = $2`
 
-	row := r.db.Exec(query, token, userId).RowsAffected
+	row := r.db.Exec(query, id, userId).RowsAffected
 
 	if row == 0 {
 		return gorm.ErrRecordNotFound

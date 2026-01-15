@@ -27,8 +27,8 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
-func OK[T any](w http.ResponseWriter, status int, data T) {
-	writeJSON(w, status, SuccessResponse[T]{
+func OK[T any](w http.ResponseWriter, status int, data ...T) {
+	writeJSON(w, status, SuccessResponse[[]T]{
 		Success: true,
 		Data:    data,
 	})

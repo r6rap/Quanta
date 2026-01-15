@@ -93,10 +93,10 @@ func ValidateToken(tokenString string) (*Claims, error) {
 }
 
 func ExtractToken(r *http.Request) string {
-	bearerTolen := r.Header.Get("Authorization")
+	bearerToken := r.Header.Get("Authorization")
 
-	if len(strings.Split(bearerTolen, "")) == 2 {
-		return strings.Split(bearerTolen, "")[1]
+	if len(strings.Split(bearerToken, "Bearer")) == 2 {
+		return strings.Split(bearerToken, " ")[1]
 	}
 
 	return ""

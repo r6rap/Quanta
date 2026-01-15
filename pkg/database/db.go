@@ -16,8 +16,6 @@ type DB struct {
 }
 
 func ConnectDB() (*DB, error) {
-	var err error
-
 	env := godotenv.Load()
 	if env != nil {
 		log.Fatal("Error loading .env file")
@@ -47,4 +45,12 @@ func ConnectDB() (*DB, error) {
 
 	log.Println("Connected to database")
 	return &DB{DB: db}, nil
+}
+
+func (d *DB) Close() error {
+	sqlDB, err := d.DB.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.Close()
 }

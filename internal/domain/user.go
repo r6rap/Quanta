@@ -24,6 +24,13 @@ type LoginInput struct {
 }
 
 type LoginResponse struct {
-	AccessToken string 	`json:"access_token"`
-	User 		User	`json:"user"`
+	RefreshToken 	string	`json:"refresh_token"`
+	AccessToken 	string 	`json:"access_token"`
+	User 			User	`json:"user"`
+}
+
+type RegisterResponse struct {
+	RefreshToken 	string	`json:"refresh_token"`
+	AccessToken 	string 	`json:"access_token"`
+	User 			User	`json:"user"`
 }
