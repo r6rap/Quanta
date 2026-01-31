@@ -17,7 +17,6 @@ type RefreshInput struct {
 }
 
 type LogoutInput struct {
-	ID 				uint	`json:"id"`
 	RefreshToken 	string 	`json:"refresh_token" binding:"required"`
 	UserID 			uint 	`json:"user_id"`
 }

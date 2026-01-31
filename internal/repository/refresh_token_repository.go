@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/r6rap/Quanta/internal/domain"
@@ -27,23 +28,23 @@ func (r *RefreshRepository) Create(req *domain.RefreshToken) error {
 func (r *RefreshRepository) GetByToken(token string, userId uint) (*domain.RefreshToken, error) {
 	storedToken := domain.RefreshToken{}
 
-	query := `SELECT token, expires_at FROM refresh_tokens WHERE token = $1 AND user_id = $2`
+	query := `SELECT id, user_id, token, expires_at FROM refresh_tokens WHERE token = $1 AND user_id = $2`
 
 	row := r.db.Raw(query, token, userId).Row()
 
-	err := row.Scan(&storedToken.Token, &storedToken.ExpiresAt)
+	err := row.Scan(&storedToken.ID, &storedToken.UserID, &storedToken.Token, &storedToken.ExpiresAt)
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 
 	return &storedToken, err
 }
 
-func (r *RefreshRepository) Delete(id uint, userId uint) error {
-	query := `DELETE FROM refresh_tokens WHERE id = $1 AND user_id = $2`
+func (r *RefreshRepository) Delete(token string, userId uint) error {
+	query := `DELETE FROM refresh_tokens WHERE token = $1 AND user_id = $2`
 
-	row := r.db.Exec(query, id, userId).RowsAffected
+	row := r.db.Exec(query, token, userId).RowsAffected
 
 	if row == 0 {
 		return gorm.ErrRecordNotFound

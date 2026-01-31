@@ -18,11 +18,16 @@ func NewRoutes(db *database.DB) *Routes {
 	return &Routes{db: db}
 }
 
-func(r *Routes) InitRoutes() *mux.Router {
+func (r *Routes) InitRoutes() *mux.Router {
 	authHandler := handler.NewAuthHandler(r.db)
 	authMiddleware := middleware.NewAuthMiddleware(authHandler)
+	corsMiddleware := middleware.NewCORSMiddleware(authHandler)
 
 	route := mux.NewRouter()
+	route.Use(corsMiddleware.CORS)
+	route.Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
 
 	auth := route.PathPrefix("/quanta/auth").Subrouter()
 	auth.HandleFunc("/register", authHandler.Register).Methods("POST")

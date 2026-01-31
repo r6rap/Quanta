@@ -23,7 +23,7 @@ type UserRepository interface {
 type RefreshRepository interface {
 	Create(req *domain.RefreshToken) error
 	GetByToken(token string, userId uint) (*domain.RefreshToken, error)
-	Delete(id uint, userId uint) error
+	Delete(token string, userId uint) error
 }
 
 func NewAuthService(userRepo UserRepository, refreshRepo RefreshRepository) *AuthService {
@@ -33,7 +33,7 @@ func NewAuthService(userRepo UserRepository, refreshRepo RefreshRepository) *Aut
 	}
 }
 
-func (s *AuthService) Register(req *domain.RegisterInput) (*domain.User, error) {
+func (s *AuthService) Register(req *domain.RegisterInput) (*domain.RegisterResponse, error) {
 	existing, err := s.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,26 @@ func (s *AuthService) Register(req *domain.RegisterInput) (*domain.User, error) 
 		return nil, err
 	}
 
-	return user, nil
+	refreshToken, _ := jwt.GenerateRefreshToken(user.ID, user.Email)
+	accessToken, _ := jwt.GenerateAccessToken(user.ID, user.Email)
+
+	expiresStr := os.Getenv("JWT_REFRESH_EXPIRY")
+
+	expiresAt, _ := time.ParseDuration(expiresStr)
+
+	payload := &domain.RefreshToken{
+		UserID:    user.ID,
+		Token:     refreshToken,
+		ExpiresAt: time.Now().Add(expiresAt),
+	}
+
+	s.refreshRepo.Create(payload)
+
+	return &domain.RegisterResponse{
+		RefreshToken: refreshToken,
+		AccessToken: accessToken,
+		User: *user,
+	}, nil
 }
 
 func (s *AuthService) Login(req *domain.LoginInput) (*domain.LoginResponse, error) {
@@ -113,7 +132,7 @@ func (s *AuthService) RefreshAccessToken(req *domain.RefreshInput) (string, erro
 	}
 
 	if time.Now().After(existingToken.ExpiresAt) {
-		return "", s.refreshRepo.Delete(existingToken.ID, existingToken.UserID)
+		return "", s.refreshRepo.Delete(req.RefreshToken, claims.UserID)
 	}
 
 	accessToken, err := jwt.GenerateAccessToken(claims.UserID, claims.Email)
@@ -125,5 +144,5 @@ func (s *AuthService) RefreshAccessToken(req *domain.RefreshInput) (string, erro
 }
 
 func (s *AuthService) Logout(req *domain.LogoutInput) error {
-	return s.refreshRepo.Delete(req.ID, req.UserID)
+	return s.refreshRepo.Delete(req.RefreshToken, req.UserID)
 }
